@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WP Form Builder Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
+    <style>
+        /* Prefix all classes with wfb- to avoid conflicts */
+        .wfb-body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .wfb-header {
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .wfb-main-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .wfb-sidebar {
+            width: 100%;
+            background: white;
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            z-index: 99;
+            max-height: 40vh;
+        }
+
+        .wfb-main-content {
+            flex: 1;
+            padding: 20px;
+            background-color: #f8f9fa;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        /* Tablet and larger screens */
+        @media (min-width: 768px) {
+            .wfb-main-container {
+                flex-direction: row;
+            }
+
+            .wfb-sidebar {
+                width: 280px;
+                max-height: none;
+                height: 100%;
+                box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .wfb-main-content {
+                width: auto;
+            }
+        }
+
+        /* Large screens */
+        @media (min-width: 992px) {
+            .wfb-sidebar {
+                width: 300px;
+            }
+        }
+
+        /* Form builder styles */
+        .wfb-form-builder-area {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            min-height: 60vh;
+            position: relative;
+            z-index: 2;
+        }
+
+        .wfb-component {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: grab;
+            transition: all 0.2s;
+            z-index: 1001;
+            position: relative;
+        }
+
+        .wfb-component:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .wfb-component.premium {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            position: relative;
+        }
+
+        .wfb-component.premium:after {
+            content: "PRO";
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #6c757d;
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .wfb-container-wrapper {
+            border: 2px dashed #6f42c1;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: #f8f9fc;
+            position: relative;
+        }
+
+        .wfb-container-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .wfb-container-placeholder {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 6px;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+
+        .wfb-container-placeholder.highlight {
+            background-color: #e9ecef;
+            border: 2px dashed #6f42c1;
+            box-shadow: 0 0 10px rgba(111, 66, 193, 0.2);
+        }
+
+        .wfb-column {
+            min-height: 150px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .wfb-column-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            gap: 3px;
+        }
+
+        .wfb-column-resize-handle {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            cursor: nwse-resize;
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .wfb-form-field {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .wfb-form-field:hover {
+            background: #e9ecef;
+        }
+
+        .wfb-form-field .wfb-field-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            gap: 5px;
+        }
+
+        .wfb-form-field:hover .wfb-field-actions {
+            opacity: 1;
+        }
+
+        .wfb-action-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .wfb-group-title {
+            font-weight: 600;
+            color: #495057;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #6f42c1;
+        }
+
+        .wfb-search-box {
+            margin-bottom: 20px;
+        }
+
+        .wfb-component-icon {
+            margin-right: 8px;
+            color: #6f42c1;
+        }
+
+        .wfb-form-field-placeholder {
+            text-align: center;
+            padding: 15px;
+            color: #6c757d;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .wfb-column-drop-zone {
+            min-height: 100px;
+            padding: 10px;
+            border: 2px dashed #adb5bd;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+
+        .wfb-component.dragging {
+            opacity: 0.5;
+        }
+
+        .wfb-column-drop-zone.active {
+            border-color: #6f42c1;
+            background-color: #e9ecef;
+        }
+
+        .wfb-settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -3px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1050;
+            padding: 20px;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+        }
+
+        .wfb-settings-panel.open {
+            right: 0;
+        }
+
+        .wfb-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+
+        .wfb-overlay.active {
+            display: block;
+        }
+
+        .wfb-json-output {
+            font-family: monospace;
+            white-space: pre-wrap;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        /* Mobile-specific improvements */
+        @media (max-width: 767px) {
+            .wfb-header {
+                padding: 12px 15px;
+            }
+
+            .wfb-main-content {
+                padding: 15px;
+            }
+
+            .wfb-form-builder-area {
+                padding: 15px;
+                min-height: 50vh;
+            }
+
+            .wfb-action-buttons {
+                bottom: 15px;
+                right: 15px;
+            }
+
+            .wfb-action-buttons .btn {
+                width: 50px;
+                height: 50px;
+            }
+
+            /* Improve touch targets */
+            .wfb-component {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+
+            /* Stack buttons in header on very small screens */
+            @media (max-width: 400px) {
+                .wfb-header .wfb-d-flex {
+                    flex-direction: column;
+                    gap: 10px;
+                }
+
+                .wfb-header .btn {
+                    width: 100%;
+                }
+            }
+        }
+
+        /* Mobile drag handle */
+        .wfb-mobile-drag-handle {
+            display: none;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            color: #6c757d;
+            cursor: grab;
+        }
+
+        @media (max-width: 767px) {
+            .wfb-mobile-drag-handle {
+                display: block;
+            }
+
+            .wfb-component {
+                padding-left: 35px;
+            }
+        }
+
+        /* Sortable fields */
+        .wfb-form-field.ui-sortable-helper {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: rotate(3deg);
+        }
+
+        .wfb-form-field-placeholder-highlight {
+            background-color: #e9ecef;
+            border: 2px dashed #6f42c1;
+        }
+
+        /* Improved settings panel */
+        .wfb-settings-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .wfb-settings-section-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .wfb-advanced-options {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        /* Condition rules styling */
+        .wfb-condition-rule {
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #6f42c1;
+        }
+
+        .wfb-remove-condition {
+            color: #dc3545;
+            cursor: pointer;
+        }
+
+        /* Column layout classes */
+        .wfb-col-1 {
+            width: 100%;
+        }
+
+        .wfb-col-2 {
+            width: 50%;
+        }
+
+        .wfb-col-3 {
+            width: 33.333%;
+        }
+
+        .wfb-col-4 {
+            width: 25%;
+        }
+
+        /* Drop zone highlight */
+        .wfb-drop-zone-highlight {
+            background-color: rgba(111, 66, 193, 0.1);
+            border: 2px dashed #6f42c1;
+        }
+    </style>
+</head>
+
+<body class="wfb-body">
+    <div class="wfb-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0"><i class="fas fa-wrench me-2"></i>WP Form Builder Pro</h3>
+            <div>
+                <button class="btn btn-outline-secondary me-2" id="wfb-previewBtn">
+                    <i class="fas fa-eye me-1"></i> Preview
+                </button>
+                <button class="btn btn-outline-primary" id="wfb-exportBtn">
+                    <i class="fas fa-download me-1"></i> Export JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="wfb-main-container">
+        <div class="wfb-sidebar">
+            <h4 class="mb-4"><i class="fas fa-tools me-2"></i>Components</h4>
+
+            <div class="wfb-search-box">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search components..."
+                        id="wfb-searchComponents">
+                </div>
+            </div>
+
+            <h6 class="wfb-group-title">Basic Components</h6>
+            <div class="wfb-component" data-type="text">
+                <i class="fas fa-font wfb-component-icon"></i> Text Input
+            </div>
+            <div class="wfb-component" data-type="textarea">
+                <i class="fas fa-align-left wfb-component-icon"></i> Text Area
+            </div>
+            <div class="wfb-component" data-type="email">
+                <i class="fas fa-envelope wfb-component-icon"></i> Email
+            </div>
+            <div class="wfb-component" data-type="number">
+                <i class="fas fa-hashtag wfb-component-icon"></i> Number
+            </div>
+            <div class="wfb-component" data-type="date">
+                <i class="fas fa-calendar wfb-component-icon"></i> Date
+            </div>
+            <div class="wfb-component" data-type="select">
+                <i class="fas fa-caret-square-down wfb-component-icon"></i> Dropdown
+            </div>
+            <div class="wfb-component" data-type="checkbox">
+                <i class="fas fa-check-square wfb-component-icon"></i> Checkbox
+            </div>
+            <div class="wfb-component" data-type="radio">
+                <i class="fas fa-dot-circle wfb-component-icon"></i> Radio Button
+            </div>
+            <div class="wfb-component" data-type="container">
+                <i class="fas fa-columns wfb-component-icon"></i> Container
+            </div>
+
+            <h6 class="wfb-group-title">Premium Components</h6>
+            <div class="wfb-component premium" data-type="file">
+                <i class="fas fa-file-upload wfb-component-icon"></i> File Upload
+            </div>
+            <div class="wfb-component premium" data-type="password">
+                <i class="fas fa-lock wfb-component-icon"></i> Password
+            </div>
+        </div>
+
+        <div class="wfb-main-content">
+            <div class="wfb-form-builder-area" id="wfb-formBuilder">
+                <div class="wfb-container-placeholder highlight" id="wfb-initialPlaceholder">
+                    <i class="fas fa-hand-point-left fa-2x mb-2"></i>
+                    <h5>Drag components from the sidebar to start building your form</h5>
+                    <p class="mb-0">Drop fields in the highlighted area to add them to your form</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="wfb-action-buttons">
+        <button class="btn btn-primary btn-lg rounded-circle shadow" id="wfb-saveFormBtn" data-bs-toggle="tooltip"
+            data-bs-placement="left" title="Save Form">
+            <i class="fas fa-save"></i>
+        </button>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="wfb-settings-panel" id="wfb-settingsPanel">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><i class="fas fa-cog me-2"></i>Field Settings</h4>
+            <button class="btn-close" id="wfb-closeSettings"></button>
+        </div>
+
+        <ul class="nav nav-tabs mb-3" id="wfb-settingsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="wfb-display-tab" data-bs-toggle="tab" data-bs-target="#wfb-display"
+                    type="button" role="tab" aria-controls="wfb-display" aria-selected="true">Display</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="wfb-validation-tab" data-bs-toggle="tab" data-bs-target="#wfb-validation"
+                    type="button" role="tab" aria-controls="wfb-validation" aria-selected="false">Validation</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="wfb-conditions-tab" data-bs-toggle="tab" data-bs-target="#wfb-conditions"
+                    type="button" role="tab" aria-controls="wfb-conditions" aria-selected="false">Conditions</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="wfb-advanced-tab" data-bs-toggle="tab" data-bs-target="#wfb-advanced"
+                    type="button" role="tab" aria-controls="wfb-advanced" aria-selected="false">Advanced</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="wfb-settingsContent">
+            <div class="tab-pane fade show active" id="wfb-display" role="tabpanel" aria-labelledby="wfb-display-tab">
+                <!-- Display settings will be loaded here dynamically -->
+            </div>
+            <div class="tab-pane fade" id="wfb-validation" role="tabpanel" aria-labelledby="wfb-validation-tab">
+                <!-- Validation settings will be loaded here dynamically -->
+            </div>
+            <div class="tab-pane fade" id="wfb-conditions" role="tabpanel" aria-labelledby="wfb-conditions-tab">
+                <!-- Condition settings will be loaded here dynamically -->
+            </div>
+            <div class="tab-pane fade" id="wfb-advanced" role="tabpanel" aria-labelledby="wfb-advanced-tab">
+                <!-- Advanced settings will be loaded here dynamically -->
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-success w-100" id="wfb-applySettings">
+                <i class="fas fa-check me-1"></i> Apply Settings
+            </button>
+        </div>
+    </div>
+
+    <div class="wfb-overlay" id="wfb-settingsOverlay"></div>
+
+    <!-- Preview Modal -->
+    <div class="modal fade" id="wfb-previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-eye me-2"></i>Form Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="wfb-formPreview"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON Modal -->
+    <div class="modal fade" id="wfb-jsonModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-code me-2"></i>Form JSON</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="wfb-json-output" id="wfb-jsonOutput"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="wfb-copyJsonBtn">
+                        <i class="fas fa-copy me-1"></i> Copy to Clipboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Settings Modal -->
+    <div class="modal fade" id="wfb-containerSettingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-columns me-2"></i>Container Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Number of Columns</label>
+                        <select class="form-select" id="wfb-containerColumns">
+                            <option value="1">1 Column</option>
+                            <option value="2" selected>2 Columns</option>
+                            <option value="3">3 Columns</option>
+                            <option value="4">4 Columns</option>
+                        </select>
+                    </div>
+                    <div id="wfb-columnWidthsContainer">
+                        <label class="form-label">Column Widths</label>
+                        <div class="row" id="wfb-columnWidths">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="wfb-applyContainerSettings">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function ($) {
+            // Initialize when document is ready
+            $(document).ready(function () {
+                // Initialize tooltips
+                $('[data-bs-toggle="tooltip"]').tooltip();
+
+                // Form data structure
+                let wfbFormData = {
+                    fields: []
+                };
+
+                let wfbCurrentFieldId = null;
+                let wfbCurrentSettings = {};
+                let wfbIsEditMode = false;
+                let wfbCurrentContainerId = null;
+
+                // Make components draggable
+                $('.wfb-component').draggable({
+                    revert: 'invalid',
+                    cursor: 'move',
+                    zIndex: 10000,
+                    scroll: false,
+                    containment: 'document',
+                    helper: function () {
+                        return $('<div class="p-2 bg-light border rounded" style="z-index: 10001;">' + $(this).text() + '</div>');
+                    },
+                    start: function (event, ui) {
+                        $(this).addClass('dragging');
+                        $('body').addClass('dragging');
+                        ui.helper.css('z-index', '10001');
+                    },
+                    stop: function (event, ui) {
+                        $(this).removeClass('dragging');
+                        $('body').removeClass('dragging');
+                    }
+                });
+
+                // Make form builder area droppable
+                $('#wfb-formBuilder').droppable({
+                    accept: '.wfb-component',
+                    hoverClass: 'wfb-drop-zone-highlight',
+                    drop: function (event, ui) {
+                        const componentType = ui.draggable.data('type');
+                        if (componentType === 'container') {
+                            wfbOpenContainerSettings();
+                        } else {
+                            // Open settings panel for the field
+                            wfbOpenSettingsPanel(componentType);
+                        }
+                    }
+                });
+
+                // Mobile touch support for components
+                if ('ontouchstart' in window) {
+                    $('.wfb-component').each(function () {
+                        $(this).append('<div class="wfb-mobile-drag-handle"><i class="fas fa-grip-lines"></i></div>');
+                    });
+
+                    // Make mobile handles draggable
+                    $('.wfb-mobile-drag-handle').on('touchstart', function (e) {
+                        e.preventDefault();
+                        $(this).closest('.wfb-component').trigger('mousedown');
+                    });
+                }
+
+                // Make form fields sortable
+                $('#wfb-formBuilder').sortable({
+                    items: '.wfb-form-field, .wfb-container-wrapper',
+                    handle: '.wfb-mobile-drag-handle, .wfb-form-field',
+                    placeholder: 'wfb-form-field-placeholder-highlight',
+                    cursor: 'move',
+                    opacity: 0.7,
+                    revert: 150,
+                    update: function (event, ui) {
+                        // Update form data order
+                        wfbUpdateFieldOrder();
+                    }
+                });
+
+                // Open container settings
+                function wfbOpenContainerSettings() {
+                    $('#wfb-containerSettingsModal').modal('show');
+                }
+
+                // Apply container settings
+                $('#wfb-applyContainerSettings').on('click', function () {
+                    const numColumns = parseInt($('#wfb-containerColumns').val());
+                    wfbAddContainer(numColumns);
+                    $('#wfb-containerSettingsModal').modal('hide');
+                });
+
+                // Update column widths UI when number of columns changes
+                $('#wfb-containerColumns').on('change', function () {
+                    const numColumns = parseInt($(this).val());
+                    wfbUpdateColumnWidthsUI(numColumns);
+                });
+
+                // Initialize column widths UI
+                function wfbUpdateColumnWidthsUI(numColumns) {
+                    const columnWidthsContainer = $('#wfb-columnWidths');
+                    columnWidthsContainer.empty();
+
+                    const defaultWidth = Math.floor(100 / numColumns);
+
+                    for (let i = 0; i < numColumns; i++) {
+                        columnWidthsContainer.append(`
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Column ${i + 1} Width (%)</label>
+                                <input type="number" class="form-control wfb-column-width" value="${defaultWidth}" min="5" max="100">
+                            </div>
+                        `);
+                    }
+                }
+
+                // Initialize with 2 columns
+                wfbUpdateColumnWidthsUI(2);
+
+                // Open settings panel
+                function wfbOpenSettingsPanel(fieldType, fieldId = null, columnId = null) {
+                    wfbIsEditMode = !!fieldId;
+
+                    if (wfbIsEditMode) {
+                        // Edit existing field
+                        const fieldData = wfbFindFieldById(fieldId);
+                        if (fieldData) {
+                            wfbCurrentFieldId = fieldId;
+                            wfbCurrentSettings = $.extend(true, {}, fieldData);
+                        }
+                    } else {
+                        // Create new field
+                        wfbCurrentFieldId = 'wfb-field-' + Date.now();
+                        wfbCurrentSettings = {
+                            id: wfbCurrentFieldId,
+                            type: fieldType,
+                            columnId: columnId,
+                            label: fieldType.charAt(0).toUpperCase() + fieldType.slice(1) + ' Field',
+                            required: false,
+                            placeholder: '',
+                            className: '',
+                            validation: {
+                                min: '',
+                                max: '',
+                                pattern: '',
+                                errorMessage: ''
+                            },
+                            conditions: {
+                                action: 'show',
+                                logic: 'all',
+                                rules: []
+                            },
+                            advanced: {
+                                defaultValue: '',
+                                helpText: ''
+                            }
+                        };
+                    }
+
+                    // Generate settings form
+                    wfbGenerateSettingsForm();
+
+                    $('#wfb-settingsPanel').addClass('open');
+                    $('#wfb-settingsOverlay').addClass('active');
+                }
+
+                // Find field by ID (including fields in containers)
+                function wfbFindFieldById(fieldId) {
+                    for (const field of wfbFormData.fields) {
+                        if (field.id === fieldId) {
+                            return field;
+                        }
+
+                        // Check if this is a container and search its columns
+                        if (field.type === 'container' && field.columns) {
+                            for (const column of field.columns) {
+                                for (const colField of column.fields) {
+                                    if (colField.id === fieldId) {
+                                        return colField;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return null;
+                }
+
+                // Generate settings form based on field type
+                function wfbGenerateSettingsForm() {
+                    // Display tab content
+                    let displayHtml = `
+                        <div class="wfb-settings-section">
+                            <h6 class="wfb-settings-section-title">Basic Settings</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Field Label</label>
+                                <input type="text" class="form-control" id="wfb-fieldLabel" value="${wfbCurrentSettings.label}">
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="wfb-fieldRequired" ${wfbCurrentSettings.required ? 'checked' : ''}>
+                                    <label class="form-check-label" for="wfb-fieldRequired">Required Field</label>
+                                </div>
+                            </div>
+                    `;
+
+                    if (['text', 'email', 'textarea', 'number'].includes(wfbCurrentSettings.type)) {
+                        displayHtml += `
+                            <div class="mb-3">
+                                <label class="form-label">Placeholder Text</label>
+                                <input type="text" class="form-control" id="wfb-fieldPlaceholder" value="${wfbCurrentSettings.placeholder || ''}" placeholder="Enter placeholder text">
+                            </div>
+                        `;
+                    }
+
+                    if (wfbCurrentSettings.type === 'select') {
+                        const optionsText = wfbCurrentSettings.options ? wfbCurrentSettings.options.join('\n') : '';
+                        displayHtml += `
+                            <div class="mb-3">
+                                <label class="form-label">Options (one per line)</label>
+                                <textarea class="form-control" id="wfb-fieldOptions" rows="4" placeholder="Option 1\nOption 2\nOption 3">${optionsText}</textarea>
+                            </div>
+                        `;
+                    }
+
+                    displayHtml += `</div>`;
+
+                    // Validation tab content
+                    let validationHtml = `
+                        <div class="wfb-settings-section">
+                            <h6 class="wfb-settings-section-title">Validation Rules</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Minimum Length</label>
+                                <input type="number" class="form-control" id="wfb-fieldMin" value="${wfbCurrentSettings.validation.min || ''}" placeholder="Enter minimum length">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Maximum Length</label>
+                                <input type="number" class="form-control" id="wfb-fieldMax" value="${wfbCurrentSettings.validation.max || ''}" placeholder="Enter maximum length">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Validation Pattern (Regex)</label>
+                                <input type="text" class="form-control" id="wfb-fieldPattern" value="${wfbCurrentSettings.validation.pattern || ''}" placeholder="Enter regex pattern">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Custom Error Message</label>
+                                <input type="text" class="form-control" id="wfb-fieldErrorMessage" value="${wfbCurrentSettings.validation.errorMessage || ''}" placeholder="Enter error message">
+                            </div>
+                        </div>
+                    `;
+
+                    // Conditions tab content
+                    let conditionsHtml = `
+                        <div class="wfb-settings-section">
+                            <h6 class="wfb-settings-section-title">Conditional Logic</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Action</label>
+                                <select class="form-select" id="wfb-conditionAction">
+                                    <option value="show" ${wfbCurrentSettings.conditions.action === 'show' ? 'selected' : ''}>Show this field</option>
+                                    <option value="hide" ${wfbCurrentSettings.conditions.action === 'hide' ? 'selected' : ''}>Hide this field</option>
+                                    <option value="enable" ${wfbCurrentSettings.conditions.action === 'enable' ? 'selected' : ''}>Enable this field</option>
+                                    <option value="disable" ${wfbCurrentSettings.conditions.action === 'disable' ? 'selected' : ''}>Disable this field</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Logic</label>
+                                <select class="form-select" id="wfb-conditionLogic">
+                                    <option value="all" ${wfbCurrentSettings.conditions.logic === 'all' ? 'selected' : ''}>All conditions must be met</option>
+                                    <option value="any" ${wfbCurrentSettings.conditions.logic === 'any' ? 'selected' : ''}>Any condition must be met</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <button class="btn btn-sm btn-outline-primary" id="wfb-addConditionRule">
+                                    <i class="fas fa-plus me-1"></i> Add Condition
+                                </button>
+                            </div>
+                            <div id="wfb-conditionRules">
+                    `;
+
+                    // Add existing condition rules
+                    if (wfbCurrentSettings.conditions.rules && wfbCurrentSettings.conditions.rules.length) {
+                        wfbCurrentSettings.conditions.rules.forEach((rule, index) => {
+                            conditionsHtml += `
+                                <div class="wfb-condition-rule" data-index="${index}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong>Condition ${index + 1}</strong>
+                                        <span class="wfb-remove-condition"><i class="fas fa-times"></i></span>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <label class="form-label">Field</label>
+                                                <select class="form-select wfb-condition-field">
+                                            </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <label class="form-label">Operator</label>
+                                                <select class="form-select wfb-condition-operator">
+                                                    <option value="equals" ${rule.operator === 'equals' ? 'selected' : ''}>Equals</option>
+                                                    <option value="not_equals" ${rule.operator === 'not_equals' ? 'selected' : ''}>Not Equals</option>
+                                                    <option value="contains" ${rule.operator === 'contains' ? 'selected' : ''}>Contains</option>
+                                                    <option value="greater_than" ${rule.operator === 'greater_than' ? 'selected' : ''}>Greater Than</option>
+                                                    <option value="less_than" ${rule.operator === 'less_than' ? 'selected' : ''}>Less Than</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Value</label>
+                                        <input type="text" class="form-control wfb-condition-value" value="${rule.value || ''}">
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    conditionsHtml += `</div></div>`;
+
+                    // Advanced tab content
+                    let advancedHtml = `
+                        <div class="wfb-settings-section">
+                            <h6 class="wfb-settings-section-title">Advanced Settings</h6>
+                            <div class="mb-3">
+                                <label class="form-label">CSS Class</label>
+                                <input type="text" class="form-control" id="wfb-fieldClassName" value="${wfbCurrentSettings.className || ''}" placeholder="Enter custom CSS class">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Default Value</label>
+                                <input type="text" class="form-control" id="wfb-fieldDefaultValue" value="${wfbCurrentSettings.advanced.defaultValue || ''}" placeholder="Enter default value">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Help Text</label>
+                                <textarea class="form-control" id="wfb-fieldHelpText" rows="2" placeholder="Enter help text">${wfbCurrentSettings.advanced.helpText || ''}</textarea>
+                            </div>
+                        </div>
+                    `;
+
+                    $('#wfb-display').html(displayHtml);
+                    $('#wfb-validation').html(validationHtml);
+                    $('#wfb-conditions').html(conditionsHtml);
+                    $('#wfb-advanced').html(advancedHtml);
+
+                    // Initialize condition rules functionality
+                    wfbInitConditionRules();
+                }
+
+                // Close settings panel
+                $('#wfb-closeSettings, #wfb-settingsOverlay').on('click', function () {
+                    $('#wfb-settingsPanel').removeClass('open');
+                    $('#wfb-settingsOverlay').removeClass('active');
+                });
+
+                // Apply settings and add/update field
+                $('#wfb-applySettings').on('click', function () {
+                    // Update current settings with form values
+                    wfbCurrentSettings.label = $('#wfb-fieldLabel').val();
+                    wfbCurrentSettings.required = $('#wfb-fieldRequired').is(':checked');
+                    wfbCurrentSettings.placeholder = $('#wfb-fieldPlaceholder').val() || '';
+                    wfbCurrentSettings.className = $('#wfb-fieldClassName').val() || '';
+
+                    // Validation settings
+                    wfbCurrentSettings.validation.min = $('#wfb-fieldMin').val() || '';
+                    wfbCurrentSettings.validation.max = $('#wfb-fieldMax').val() || '';
+                    wfbCurrentSettings.validation.pattern = $('#wfb-fieldPattern').val() || '';
+                    wfbCurrentSettings.validation.errorMessage = $('#wfb-fieldErrorMessage').val() || '';
+
+                    // Condition settings
+                    wfbCurrentSettings.conditions.action = $('#wfb-conditionAction').val();
+                    wfbCurrentSettings.conditions.logic = $('#wfb-conditionLogic').val();
+
+                    // Advanced settings
+                    wfbCurrentSettings.advanced.defaultValue = $('#wfb-fieldDefaultValue').val() || '';
+                    wfbCurrentSettings.advanced.helpText = $('#wfb-fieldHelpText').val() || '';
+
+                    if (wfbCurrentSettings.type === 'select') {
+                        const optionsText = $('#wfb-fieldOptions').val();
+                        wfbCurrentSettings.options = optionsText ? optionsText.split('\n') : ['Option 1', 'Option 2', 'Option 3'];
+                    }
+
+                    // Add or update field in form
+                    if (wfbIsEditMode) {
+                        wfbUpdateField(wfbCurrentSettings);
+                    } else {
+                        wfbAddField(wfbCurrentSettings);
+                    }
+
+                    // Close settings panel
+                    $('#wfb-settingsPanel').removeClass('open');
+                    $('#wfb-settingsOverlay').removeClass('active');
+                });
+
+                // Function to add a field
+                function wfbAddField(settings) {
+                    // Add to form data
+                    if (settings.columnId) {
+                        // Find the container and add to the specific column
+                        for (const field of wfbFormData.fields) {
+                            if (field.type === 'container' && field.columns) {
+                                for (const column of field.columns) {
+                                    if (column.id === settings.columnId) {
+                                        if (!column.fields) column.fields = [];
+                                        column.fields.push(settings);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Add to main form data
+                        wfbFormData.fields.push(settings);
+                    }
+
+                    // Generate field HTML
+                    const fieldHtml = wfbGenerateFieldHtml(settings);
+
+                    // Add to form builder area
+                    if (settings.columnId) {
+                        // Add to specific column
+                        $(`[data-column-id="${settings.columnId}"] .wfb-column-drop-zone`).append(fieldHtml);
+
+                        // Update column field count
+                        const column = $(`[data-column-id="${settings.columnId}"]`);
+                        const badge = column.find('.badge');
+                        const currentCount = parseInt(badge.text());
+                        badge.text(currentCount + 1 + ' fields');
+                    } else {
+                        // Add to main area
+                        if ($('#wfb-formBuilder .wfb-container-placeholder').length) {
+                            $('#wfb-formBuilder .wfb-container-placeholder').remove();
+                        }
+                        $('#wfb-formBuilder').append(fieldHtml);
+                    }
+
+                    // Initialize tooltips for new fields
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+
+                    // Make the field sortable
+                    $('#wfb-formBuilder').sortable('refresh');
+                }
+
+                // Function to update a field
+                function wfbUpdateField(settings) {
+                    // Update in form data
+                    if (settings.columnId) {
+                        // Find the field in container columns
+                        for (const field of wfbFormData.fields) {
+                            if (field.type === 'container' && field.columns) {
+                                for (const column of field.columns) {
+                                    if (column.fields) {
+                                        const index = column.fields.findIndex(f => f.id === settings.id);
+                                        if (index !== -1) {
+                                            column.fields[index] = settings;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Update in main form data
+                        const index = wfbFormData.fields.findIndex(field => field.id === settings.id);
+                        if (index !== -1) {
+                            wfbFormData.fields[index] = settings;
+                        }
+                    }
+
+                    // Update in UI
+                    const fieldHtml = wfbGenerateFieldHtml(settings);
+                    $(`[data-field-id="${settings.id}"]`).replaceWith(fieldHtml);
+
+                    // Initialize tooltips for updated field
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+                }
+
+                // Function to generate field HTML
+                function wfbGenerateFieldHtml(settings) {
+                    let fieldHtml = '';
+                    const fieldId = settings.id;
+
+                    switch (settings.type) {
+                        case 'text':
+                        case 'email':
+                        case 'number':
+                        case 'date':
+                        case 'password':
+                            fieldHtml = `
+                                <div class="wfb-form-field" data-field-id="${fieldId}">
+                                    <div class="wfb-mobile-drag-handle"><i class="fas fa-grip-lines"></i></div>
+                                    <label class="form-label">${settings.label}${settings.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                                    <input type="${settings.type}" class="form-control" placeholder="${settings.placeholder}">
+                                    <div class="wfb-field-actions">
+                                        <button class="btn btn-sm btn-outline-secondary wfb-edit-field" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info wfb-duplicate-field" data-bs-toggle="tooltip" title="Duplicate">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger wfb-remove-field" data-bs-toggle="tooltip" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                        case 'textarea':
+                            fieldHtml = `
+                                <div class="wfb-form-field" data-field-id="${fieldId}">
+                                    <div class="wfb-mobile-drag-handle"><i class="fas fa-grip-lines"></i></div>
+                                    <label class="form-label">${settings.label}${settings.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                                    <textarea class="form-control" rows="3" placeholder="${settings.placeholder}"></textarea>
+                                    <div class="wfb-field-actions">
+                                        <button class="btn btn-sm btn-outline-secondary wfb-edit-field" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info wfb-duplicate-field" data-bs-toggle="tooltip" title="Duplicate">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger wfb-remove-field" data-bs-toggle="tooltip" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                        case 'select':
+                            let optionsHtml = '';
+                            if (settings.options && settings.options.length) {
+                                settings.options.forEach(option => {
+                                    optionsHtml += `<option value="${option}">${option}</option>`;
+                                });
+                            }
+
+                            fieldHtml = `
+                                <div class="wfb-form-field" data-field-id="${fieldId}">
+                                    <div class="wfb-mobile-drag-handle"><i class="fas fa-grip-lines"></i></div>
+                                    <label class="form-label">${settings.label}${settings.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                                    <select class="form-select">
+                                        <option value="">Please select</option>
+                                        ${optionsHtml}
+                                    </select>
+                                    <div class="wfb-field-actions">
+                                        <button class="btn btn-sm btn-outline-secondary wfb-edit-field" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info wfb-duplicate-field" data-bs-toggle="tooltip" title="Duplicate">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger wfb-remove-field" data-bs-toggle="tooltip" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                        case 'checkbox':
+                            fieldHtml = `
+                                <div class="wfb-form-field" data-field-id="${fieldId}">
+                                    <div class="wfb-mobile-drag-handle"><i class="fas fa-grip-lines"></i></div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="${fieldId}">
+                                        <label class="form-check-label" for="${fieldId}">${settings.label}${settings.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                                    </div>
+                                    <div class="wfb-field-actions">
+                                        <button class="btn btn-sm btn-outline-secondary wfb-edit-field" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info wfb-duplicate-field" data-bs-toggle="tooltip" title="Duplicate">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger wfb-remove-field" data-bs-toggle="tooltip" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                        case 'radio':
+                            fieldHtml = `
+                                <div class="wfb-form-field" data-field-id="${fieldId}">
+                                    <div class="wfb-mobile-drag-handle"><i class="fas fa-grip-lines"></i></div>
+                                    <label class="form-label">${settings.label}${settings.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="${fieldId}-group" id="${fieldId}-1">
+                                        <label class="form-check-label" for="${fieldId}-1">Option 1</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="${fieldId}-group" id="${fieldId}-2">
+                                        <label class="form-check-label" for="${fieldId}-2">Option 2</label>
+                                    </div>
+                                    <div class="wfb-field-actions">
+                                        <button class="btn btn-sm btn-outline-secondary wfb-edit-field" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info wfb-duplicate-field" data-bs-toggle="tooltip" title="Duplicate">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger wfb-remove-field" data-bs-toggle="tooltip" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                    }
+
+                    return fieldHtml;
+                }
+
+                // Function to add a container
+                function wfbAddContainer(numColumns = 2) {
+                    const containerId = 'wfb-container-' + Date.now();
+                    wfbCurrentContainerId = containerId;
+
+                    // Get column widths
+                    const columnWidths = [];
+                    $('.wfb-column-width').each(function () {
+                        columnWidths.push(parseInt($(this).val()));
+                    });
+
+                    // Create columns array
+                    const columns = [];
+                    for (let i = 0; i < numColumns; i++) {
+                        const columnId = 'wfb-column-' + Date.now() + '-' + (i + 1);
+                        columns.push({
+                            id: columnId,
+                            width: columnWidths[i] || Math.floor(100 / numColumns),
+                            fields: []
+                        });
+                    }
+
+                    // Generate container HTML
+                    const containerHtml = `
+                        <div class="wfb-container-wrapper" data-container-id="${containerId}">
+                            <div class="wfb-container-actions">
+                                <button class="btn btn-sm btn-outline-secondary wfb-edit-container" data-bs-toggle="tooltip" title="Edit Container">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info wfb-add-column" data-bs-toggle="tooltip" title="Add Column">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger wfb-remove-container" data-bs-toggle="tooltip" title="Remove Container">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5><i class="fas fa-columns me-2"></i>Container</h5>
+                            </div>
+                            <div class="row">
+                                ${columns.map((column, index) => `
+                                    <div class="col-md-${12 / numColumns}" style="position: relative;">
+                                        <div class="wfb-column" data-column-id="${column.id}" data-column-index="${index}">
+                                            <div class="wfb-column-actions">
+                                                <button class="btn btn-sm btn-outline-secondary wfb-edit-column" data-bs-toggle="tooltip" title="Edit Column">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger wfb-remove-column" data-bs-toggle="tooltip" title="Remove Column">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                            <div class="wfb-column-resize-handle">
+                                                <i class="fas fa-expand-alt"></i>
+                                            </div>
+                                            <div class="column-header">
+                                                <span>Column ${index + 1}</span>
+                                                <span class="badge bg-primary">0 fields</span>
+                                            </div>
+                                            <div class="wfb-column-drop-zone">
+                                                <div class="wfb-form-field-placeholder">
+                                                    <i class="fas fa-arrow-down"></i>
+                                                    <p>Drop fields here</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+
+                    // Remove placeholder if it exists
+                    if ($('#wfb-formBuilder .wfb-container-placeholder').length) {
+                        $('#wfb-formBuilder .wfb-container-placeholder').remove();
+                    }
+
+                    $('#wfb-formBuilder').append(containerHtml);
+
+                    // Make columns droppable
+                    $('.wfb-column-drop-zone').droppable({
+                        accept: '.wfb-component',
+                        hoverClass: 'active',
+                        drop: function (event, ui) {
+                            const componentType = ui.draggable.data('type');
+                            if (componentType !== 'container') {
+                                wfbOpenSettingsPanel(componentType, null, $(this).closest('.wfb-column').data('column-id'));
+                            }
+                        }
+                    });
+
+                    // Initialize column resize handles
+                    $('.wfb-column-resize-handle').on('mousedown', function (e) {
+                        e.preventDefault();
+                        const column = $(this).closest('.wfb-column');
+                        const columnId = column.data('column-id');
+                        const startX = e.pageX;
+                        const startWidth = column.width();
+
+                        $(document).on('mousemove.wfb-resize', function (e) {
+                            const newWidth = startWidth + (e.pageX - startX);
+                            column.width(newWidth);
+                        });
+
+                        $(document).on('mouseup.wfb-resize', function () {
+                            $(document).off('mousemove.wfb-resize');
+                            $(document).off('mouseup.wfb-resize');
+
+                            // Update the column width in form data
+                            for (const field of wfbFormData.fields) {
+                                if (field.type === 'container' && field.id === wfbCurrentContainerId) {
+                                    for (const col of field.columns) {
+                                        if (col.id === columnId) {
+                                            col.width = column.width();
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        });
+                    });
+
+                    // Add container to form data
+                    wfbFormData.fields.push({
+                        id: containerId,
+                        type: 'container',
+                        columns: columns
+                    });
+
+                    // Make the container sortable
+                    $('#wfb-formBuilder').sortable('refresh');
+                }
+
+                // Remove field
+                $(document).on('click', '.wfb-remove-field', function () {
+                    const fieldId = $(this).closest('.wfb-form-field').data('field-id');
+                    const fieldElement = $(this).closest('.wfb-form-field');
+                    const columnElement = fieldElement.closest('.wfb-column');
+
+                    // Remove from form data
+                    if (columnElement.length) {
+                        // Field is in a column
+                        const columnId = columnElement.data('column-id');
+                        for (const field of wfbFormData.fields) {
+                            if (field.type === 'container' && field.columns) {
+                                for (const column of field.columns) {
+                                    if (column.id === columnId && column.fields) {
+                                        column.fields = column.fields.filter(f => f.id !== fieldId);
+
+                                        // Update column field count
+                                        const badge = columnElement.find('.badge');
+                                        const currentCount = parseInt(badge.text());
+                                        badge.text(currentCount - 1 + ' fields');
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Field is in main area
+                        wfbFormData.fields = wfbFormData.fields.filter(field => field.id !== fieldId);
+                    }
+
+                    fieldElement.remove();
+
+                    // Add placeholder if no components left
+                    if ($('#wfb-formBuilder').children().length === 0) {
+                        $('#wfb-formBuilder').html(`
+                            <div class="wfb-container-placeholder highlight" id="wfb-initialPlaceholder">
+                                <i class="fas fa-hand-point-left fa-2x mb-2"></i>
+                                <h5>Drag components from the sidebar to start building your form</h5>
+                                <p class="mb-0">Drop fields in the highlighted area to add them to your form</p>
+                            </div>
+                        `);
+                    }
+                });
+
+                // Remove container
+                $(document).on('click', '.wfb-remove-container', function () {
+                    const containerId = $(this).closest('.wfb-container-wrapper').data('container-id');
+                    $(this).closest('.wfb-container-wrapper').remove();
+
+                    // Remove from form data
+                    wfbFormData.fields = wfbFormData.fields.filter(field => field.id !== containerId);
+
+                    // Add placeholder if no components left
+                    if ($('#wfb-formBuilder').children().length === 0) {
+                        $('#wfb-formBuilder').html(`
+                            <div class="wfb-container-placeholder highlight" id="wfb-initialPlaceholder">
+                                <i class="fas fa-hand-point-left fa-2x mb-2"></i>
+                                <h5>Drag components from the sidebar to start building your form</h5>
+                                <p class="mb-0">Drop fields in the highlighted area to add them to your form</p>
+                            </div>
+                        `);
+                    }
+                });
+
+                // Edit field
+                $(document).on('click', '.wfb-edit-field', function () {
+                    const fieldId = $(this).closest('.wfb-form-field').data('field-id');
+                    const fieldData = wfbFindFieldById(fieldId);
+
+                    if (fieldData) {
+                        wfbOpenSettingsPanel(fieldData.type, fieldData.id, fieldData.columnId);
+                    }
+                });
+
+                // Duplicate field
+                $(document).on('click', '.wfb-duplicate-field', function () {
+                    const fieldId = $(this).closest('.wfb-form-field').data('field-id');
+                    const fieldData = wfbFindFieldById(fieldId);
+
+                    if (fieldData) {
+                        // Create a deep copy
+                        const duplicatedField = $.extend(true, {}, fieldData);
+                        duplicatedField.id = 'wfb-field-' + Date.now();
+                        duplicatedField.label = duplicatedField.label + ' (Copy)';
+
+                        // Add to form
+                        wfbAddField(duplicatedField);
+                    }
+                });
+
+                // Update field order when sorted
+                function wfbUpdateFieldOrder() {
+                    // This would update the order in wfbFormData based on the DOM order
+                    // Implementation would depend on your specific data structure needs
+                }
+
+                // Initialize condition rules functionality
+                function wfbInitConditionRules() {
+                    // Add condition rule
+                    $('#wfb-addConditionRule').on('click', function () {
+                        if (!wfbCurrentSettings.conditions.rules) {
+                            wfbCurrentSettings.conditions.rules = [];
+                        }
+
+                        const newRule = {
+                            field: '',
+                            operator: 'equals',
+                            value: ''
+                        };
+
+                        wfbCurrentSettings.conditions.rules.push(newRule);
+                        wfbGenerateSettingsForm(); // Regenerate form to show new rule
+                    });
+
+                    // Remove condition rule
+                    $(document).on('click', '.wfb-remove-condition', function () {
+                        const index = $(this).closest('.wfb-condition-rule').data('index');
+                        wfbCurrentSettings.conditions.rules.splice(index, 1);
+                        wfbGenerateSettingsForm(); // Regenerate form
+                    });
+                }
+
+                // Preview form
+                $('#wfb-previewBtn').on('click', function () {
+                    wfbGenerateFormPreview();
+                    $('#wfb-previewModal').modal('show');
+                });
+
+                // Export JSON
+                $('#wfb-exportBtn').on('click', function () {
+                    $('#wfb-jsonOutput').text(JSON.stringify(wfbFormData, null, 2));
+                    $('#wfb-jsonModal').modal('show');
+                });
+
+                // Copy JSON to clipboard
+                $('#wfb-copyJsonBtn').on('click', function () {
+                    const jsonText = JSON.stringify(wfbFormData, null, 2);
+                    navigator.clipboard.writeText(jsonText).then(function () {
+                        alert('JSON copied to clipboard!');
+                    });
+                });
+
+                // Save form
+                $('#wfb-saveFormBtn').on('click', function () {
+                    localStorage.setItem('wfbFormBuilderData', JSON.stringify(wfbFormData));
+                    alert('Form saved successfully!');
+                });
+
+                function wfbGenerateFormPreview() {
+                    let previewHtml = '<form class="p-3">';
+
+                    // Check if we have any fields
+                    if (!wfbFormData.fields || wfbFormData.fields.length === 0) {
+                        previewHtml += '<div class="alert alert-info">No fields in the form yet. Add some fields first.</div>';
+                    } else {
+                        // Only show fields that are actually in the form builder
+                        wfbFormData.fields.forEach(field => {
+                            if (!field) return; // Skip undefined fields
+
+                            if (field.type === 'container') {
+                                previewHtml += `<div class="container border p-3 mb-3">`;
+                                previewHtml += `<h5>Container</h5>`;
+                                previewHtml += `<div class="row">`;
+
+                                if (field.columns && field.columns.length) {
+                                    field.columns.forEach(column => {
+                                        const colWidth = column.width || Math.floor(100 / field.columns.length);
+                                        previewHtml += `<div class="col-md-${12 / field.columns.length}" style="flex: 0 0 ${colWidth}%; max-width: ${colWidth}%;">`;
+                                        if (column.fields && column.fields.length > 0) {
+                                            column.fields.forEach(subField => {
+                                                if (subField) { // Check if subField exists
+                                                    previewHtml += wfbGenerateFieldPreview(subField);
+                                                }
+                                            });
+                                        } else {
+                                            previewHtml += '<p class="text-muted">No fields in this column</p>';
+                                        }
+                                        previewHtml += `</div>`;
+                                    });
+                                } else {
+                                    previewHtml += '<div class="col-12"><p class="text-muted">No columns in this container</p></div>';
+                                }
+
+                                previewHtml += `</div></div>`;
+                            } else {
+                                previewHtml += wfbGenerateFieldPreview(field);
+                            }
+                        });
+                    }
+
+                    previewHtml += '<button type="submit" class="btn btn-primary mt-3">Submit Form</button>';
+                    previewHtml += '</form>';
+
+                    $('#wfb-formPreview').html(previewHtml);
+                }
+
+
+                // Fixed wfbGenerateFieldPreview function
+                function wfbGenerateFieldPreview(field) {
+                    // Make sure field.advanced exists
+                    const advanced = field.advanced || {};
+                    const defaultValue = advanced.defaultValue || '';
+                    const helpText = advanced.helpText || '';
+
+                    let fieldHtml = '';
+
+                    switch (field.type) {
+                        case 'text':
+                        case 'email':
+                        case 'number':
+                        case 'date':
+                        case 'password':
+                            fieldHtml = `
+                <div class="mb-3">
+                    <label class="form-label">${field.label}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                    <input type="${field.type}" class="form-control" placeholder="${field.placeholder || ''}" value="${defaultValue}">
+                    ${helpText ? `<div class="form-text">${helpText}</div>` : ''}
+                </div>
+            `;
+                            break;
+                        case 'textarea':
+                            fieldHtml = `
+                <div class="mb-3">
+                    <label class="form-label">${field.label}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                    <textarea class="form-control" rows="3" placeholder="${field.placeholder || ''}">${defaultValue}</textarea>
+                    ${helpText ? `<div class="form-text">${helpText}</div>` : ''}
+                </div>
+            `;
+                            break;
+                        case 'select':
+                            let optionsHtml = '';
+                            if (field.options && field.options.length) {
+                                field.options.forEach(option => {
+                                    const selected = option === defaultValue ? 'selected' : '';
+                                    optionsHtml += `<option value="${option}" ${selected}>${option}</option>`;
+                                });
+                            }
+
+                            fieldHtml = `
+                <div class="mb-3">
+                    <label class="form-label">${field.label}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                    <select class="form-select">
+                        <option value="">Please select</option>
+                        ${optionsHtml}
+                    </select>
+                    ${helpText ? `<div class="form-text">${helpText}</div>` : ''}
+                </div>
+            `;
+                            break;
+                        case 'checkbox':
+                            fieldHtml = `
+                <div class="mb-3">
+                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="preview-${field.id}" ${defaultValue ? 'checked' : ''}>
+                                        <label class="form-check-label" for="preview-${field.id}">${field.label}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                                    </div>
+                                    ${helpText ? `<div class="form-text">${helpText}</div>` : ''}
+                                </div>
+                            `;
+                            break;
+                        case 'radio':
+                            fieldHtml = `
+                                <div class="mb-3">
+                                    <label class="form-label">${field.label}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="preview-${field.id}" id="preview-${field.id}-1" ${defaultValue === 'Option 1' ? 'checked' : ''}>
+                                        <label class="form-check-label" for="preview-${field.id}-1">Option 1</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="preview-${field.id}" id="preview-${field.id}-2" ${defaultValue === 'Option 2' ? 'checked' : ''}>
+                                        <label class="form-check-label" for="preview-${field.id}-2">Option 2</label>
+                                    </div>
+                                    ${helpText ? `<div class="form-text">${helpText}</div>` : ''}
+                                </div>
+                            `;
+                            break;
+                        default:
+                            // Default case for unknown field types
+                            fieldHtml = `
+                                <div class="mb-3">
+                                    <label class="form-label">${field.label}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                                    <input type="text" class="form-control" placeholder="${field.placeholder || ''}" value="${defaultValue}">
+                                    ${helpText ? `<div class="form-text">${helpText}</div>` : ''}
+                                </div>
+                            `;
+                    }
+
+                    return fieldHtml;
+                }
+
+                // Search functionality
+                $('#wfb-searchComponents').on('keyup', function () {
+                    const searchText = $(this).val().toLowerCase();
+
+                    $('.wfb-component').each(function () {
+                        const componentText = $(this).text().toLowerCase();
+                        if (componentText.includes(searchText)) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                });
+
+                // Load saved form if exists
+                const savedData = localStorage.getItem('wfbFormBuilderData');
+                if (savedData) {
+                    wfbFormData = JSON.parse(savedData);
+                    // Rebuild form from saved data
+                    wfbFormData.fields.forEach(field => {
+                        if (field.type === 'container') {
+                            // Rebuild container
+                            wfbRebuildContainer(field);
+                        } else {
+                            // Rebuild regular field
+                            wfbAddField(field);
+                        }
+                    });
+                }
+
+                // Rebuild container from saved data
+                function wfbRebuildContainer(containerData) {
+                    const containerId = containerData.id;
+                    wfbCurrentContainerId = containerId;
+
+                    // Generate container HTML
+                    const containerHtml = `
+                        <div class="wfb-container-wrapper" data-container-id="${containerId}">
+                            <div class="wfb-container-actions">
+                                <button class="btn btn-sm btn-outline-secondary wfb-edit-container" data-bs-toggle="tooltip" title="Edit Container">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info wfb-add-column" data-bs-toggle="tooltip" title="Add Column">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger wfb-remove-container" data-bs-toggle="tooltip" title="Remove Container">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5><i class="fas fa-columns me-2"></i>Container</h5>
+                            </div>
+                            <div class="row">
+                                ${containerData.columns.map((column, index) => `
+                                    <div class="col-md-${12 / containerData.columns.length}" style="position: relative; flex: 0 0 ${column.width}%; max-width: ${column.width}%;">
+                                        <div class="wfb-column" data-column-id="${column.id}" data-column-index="${index}">
+                                            <div class="wfb-column-actions">
+                                                <button class="btn btn-sm btn-outline-secondary wfb-edit-column" data-bs-toggle="tooltip" title="Edit Column">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger wfb-remove-column" data-bs-toggle="tooltip" title="Remove Column">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                            <div class="wfb-column-resize-handle">
+                                                <i class="fas fa-expand-alt"></i>
+                                            </div>
+                                            <div class="column-header">
+                                                <span>Column ${index + 1}</span>
+                                                <span class="badge bg-primary">${column.fields ? column.fields.length : 0} fields</span>
+                                            </div>
+                                            <div class="wfb-column-drop-zone">
+                                                ${column.fields && column.fields.length ? '' : `
+                                                    <div class="wfb-form-field-placeholder">
+                                                        <i class="fas fa-arrow-down"></i>
+                                                        <p>Drop fields here</p>
+                                                    </div>
+                                                `}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+
+                    // Remove placeholder if it exists
+                    if ($('#wfb-formBuilder .wfb-container-placeholder').length) {
+                        $('#wfb-formBuilder .wfb-container-placeholder').remove();
+                    }
+
+                    $('#wfb-formBuilder').append(containerHtml);
+
+                    // Make columns droppable
+                    $('.wfb-column-drop-zone').droppable({
+                        accept: '.wfb-component',
+                        hoverClass: 'active',
+                        drop: function (event, ui) {
+                            const componentType = ui.draggable.data('type');
+                            if (componentType !== 'container') {
+                                wfbOpenSettingsPanel(componentType, null, $(this).closest('.wfb-column').data('column-id'));
+                            }
+                        }
+                    });
+
+                    // Initialize column resize handles
+                    $('.wfb-column-resize-handle').on('mousedown', function (e) {
+                        e.preventDefault();
+                        const column = $(this).closest('.wfb-column');
+                        const columnId = column.data('column-id');
+                        const startX = e.pageX;
+                        const startWidth = column.width();
+
+                        $(document).on('mousemove.wfb-resize', function (e) {
+                            const newWidth = startWidth + (e.pageX - startX);
+                            column.width(newWidth);
+                        });
+
+                        $(document).on('mouseup.wfb-resize', function () {
+                            $(document).off('mousemove.wfb-resize');
+                            $(document).off('mouseup.wfb-resize');
+
+                            // Update the column width in form data
+                            for (const field of wfbFormData.fields) {
+                                if (field.type === 'container' && field.id === wfbCurrentContainerId) {
+                                    for (const col of field.columns) {
+                                        if (col.id === columnId) {
+                                            col.width = column.width();
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        });
+                    });
+
+                    // Rebuild fields in container
+                    containerData.columns.forEach(column => {
+                        if (column.fields) {
+                            column.fields.forEach(subField => {
+                                const fieldHtml = wfbGenerateFieldHtml(subField);
+                                $(`[data-column-id="${column.id}"] .wfb-column-drop-zone`).append(fieldHtml);
+                            });
+                        }
+                    });
+
+                    // Make the container sortable
+                    $('#wfb-formBuilder').sortable('refresh');
+                }
+            });
+        })(jQuery);
+    </script>
+</body>
+
+</html>
