@@ -660,7 +660,7 @@
                     fields: []
                 };
 
-                
+
 
                 let wfbCurrentFieldId = null;
                 let wfbCurrentSettings = {};
@@ -703,6 +703,8 @@
                     }
                 });
 
+
+
                 // Mobile touch support for components
                 if ('ontouchstart' in window) {
                     $('.wfb-component').each(function () {
@@ -716,17 +718,25 @@
                     });
                 }
 
+
+
                 // Make form fields sortable
                 $('#wfb-formBuilder').sortable({
-                    items: '.wfb-form-field, .wfb-container-wrapper',
-                    handle: '.wfb-mobile-drag-handle, .wfb-form-field',
+                    // items: '.wfb-form-field, .wfb-container-wrapper',
+                    // handle: '.wfb-mobile-drag-handle, .wfb-form-field',
                     placeholder: 'wfb-form-field-placeholder-highlight',
                     cursor: 'move',
                     opacity: 0.7,
-                    revert: 150,
+                    // revert: 150,
                     update: function (event, ui) {
-                        // Update form data order
-                        wfbUpdateFieldOrder();
+
+                        console.log('inside .wfb-formBuilder sort', wfbFormData);
+
+                        console.log("UI");
+                        console.log(ui);
+                        console.log("Event");
+                        console.log(event);
+
                     }
                 });
 
@@ -818,11 +828,13 @@
                     $('#wfb-settingsOverlay').addClass('active');
                 }
 
+
+
+
                 // Find field by ID (including fields in containers)
                 function wfbFindFieldById(fieldId) {
 
-                    
-                    
+
                     for (const field of wfbFormData.fields) {
                         if (field.id === fieldId) {
                             return field;
@@ -840,7 +852,7 @@
                         }
                     }
 
-                  
+
                     return null;
                 }
 
@@ -1051,7 +1063,9 @@
                 // Function to add a field
                 function wfbAddField(settings) {
 
-                    
+                    console.log('wfbAddField', wfbFormData);
+
+
                     // Add to form data
                     if (settings.columnId) {
                         // Find the container and add to the specific column
@@ -1071,8 +1085,8 @@
                         wfbFormData.fields.push(settings);
                     }
 
-                      console.log(wfbFormData);
-                    
+
+
 
                     // Generate field HTML
                     const fieldHtml = wfbGenerateFieldHtml(settings);
@@ -1101,6 +1115,10 @@
                     // Make the field sortable
                     $('#wfb-formBuilder').sortable('refresh');
                 }
+
+
+
+
 
                 // Function to update a field
                 function wfbUpdateField(settings) {
@@ -1456,7 +1474,7 @@
                     wfbFormData.fields = wfbFormData.fields.filter(field => field.id !== containerId);
 
                     console.log('wfbFormData after removing container', wfbFormData);
-                    
+
 
                     // Add placeholder if no components left
                     if ($('#wfb-formBuilder').children().length === 0) {
@@ -1474,8 +1492,8 @@
                 $(document).on('click', '.wfb-edit-field', function () {
                     const fieldId = $(this).closest('.wfb-form-field').data('field-id');
                     const fieldData = wfbFindFieldById(fieldId);
-                    
-                    // console.log(fieldData);
+
+                    console.log(fieldData);
 
 
                     if (fieldData) {
@@ -1547,7 +1565,7 @@
                 // Copy JSON to clipboard
                 $('#wfb-copyJsonBtn').on('click', function () {
                     const jsonText = JSON.stringify(wfbFormData, null, 2);
-                    
+
                     navigator.clipboard.writeText(jsonText).then(function () {
                         alert('JSON copied to clipboard!');
                     });
@@ -1556,14 +1574,33 @@
                 // Save form
                 $('#wfb-saveFormBtn').on('click', function () {
                     console.log('wfbFormData', wfbFormData);
-                    
+
+                    // Save to localStorage
                     localStorage.setItem('wfbFormBuilderData', JSON.stringify(wfbFormData));
-                    alert('Form saved successfully!');
+
+                    // Append success alert if not already present
+                    if ($('#wfb-successMsg').length === 0) {
+                        $('body').append(`
+            <div id="wfb-successMsg" class="alert alert-success position-fixed top-0 start-50 translate-middle-x mt-3 shadow" 
+                 style="display:none; z-index:9999; width:auto; max-width:400px;">
+                ✅ Form saved successfully!
+            </div>
+        `);
+                    }
+
+                    // Show with fade in, delay, then fade out
+                    $('#wfb-successMsg')
+                        .stop(true, true)   // clear previous animations
+                        .fadeIn(400)
+                        .delay(2000)
+                        .fadeOut(600);
                 });
 
-                function wfbGenerateFormPreview() {
-                    let previewHtml = '<form class="p-3">';
 
+                // form preview generation
+                function wfbGenerateFormPreview() {
+
+                    let previewHtml = '<form class="p-3">';
                     // Check if we have any fields
                     if (!wfbFormData.fields || wfbFormData.fields.length === 0) {
                         previewHtml += '<div class="alert alert-info">No fields in the form yet. Add some fields first.</div>';
@@ -1602,13 +1639,11 @@
                             }
                         });
                     }
-
                     previewHtml += '<button type="submit" class="btn btn-primary mt-3">Submit Form</button>';
                     previewHtml += '</form>';
 
-                    
-
                     $('#wfb-formPreview').html(previewHtml);
+
                 }
 
 
@@ -1719,21 +1754,50 @@
                     });
                 });
 
+
                 // Load saved form if exists
                 const savedData = localStorage.getItem('wfbFormBuilderData');
+
+
                 if (savedData) {
                     wfbFormData = JSON.parse(savedData);
+
+                    console.log('if savedData', wfbFormData);
+
+                    // ✅ Clear the builder DOM first
+                    $('#wfb-formBuilder').empty();
+
+                    // ✅ Reset fields array
+                    let rebuiltFields = [];
+
                     // Rebuild form from saved data
-                    wfbFormData.fields.forEach(field => {
-                        if (field.type === 'container') {
-                            // Rebuild container
-                            wfbRebuildContainer(field);
-                        } else {
-                            // Rebuild regular field
-                            wfbAddField(field);
-                        }
-                    });
+                    if (Array.isArray(wfbFormData.fields) && wfbFormData.fields.length > 0) {
+                        wfbFormData.fields.forEach(field => {
+                            if (field.type === 'container') {
+                                wfbRebuildContainer(field);
+                            } else {
+                                wfbAddField(field);
+                            }
+                            rebuiltFields.push(field); // keep unique
+                        });
+                    }
+
+                    // ✅ Replace with clean rebuilt list
+                    wfbFormData.fields = rebuiltFields;
+
+                    // ✅ If nothing was rebuilt, show default placeholder
+                    if (wfbFormData.fields.length === 0) {
+                        $('#wfb-formBuilder').html(`
+            <div class="wfb-container-placeholder highlight" id="wfb-initialPlaceholder">
+                <i class="fas fa-hand-point-left fa-2x mb-2"></i>
+                <h5>Drag components from the sidebar to start building your form</h5>
+                <p class="mb-0">Drop fields in the highlighted area to add them to your form</p>
+            </div>
+        `);
+                    }
                 }
+
+
 
                 // Rebuild container from saved data
                 function wfbRebuildContainer(containerData) {
